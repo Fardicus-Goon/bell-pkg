@@ -20,21 +20,11 @@ help (Shows the "Bell Help Pane")
 updatepkg (Updates sources and packages. Not implimented yet and may take a while)
 --------------------------------------------------------------------------------------
 Roadmap for bell-pkg:
+@WORLD set (Helps keep track of packages and helps with the removal process)
 Dependency tracking (Needed and a priority feature)
-----
-Proper loading indicator (Not strictly needed, but would be fun and silly)
-----
 Support for more compilers (I need to learn the compilers before adding them, but it is also a priority feature)
-----
-Native HTTP|HTTPS|FTP file retriever (Not needed whatsoever, but allows for less dependencies)
-----
 Pre-compiled binary packages (I would need a site to host those packages and I would need a bigger community behind bell-pkg to compile the packages and add them to said repo. If anyone wants to help, send me a message please. It would be greatly appreciated. :3 )
-----
-Bootstrapper/installer (Designed for any LFS users, but also because I would like to make my own distribution centered around bell-pkg)
-----
-Proper config file (For people to choose their autenticator such as "Sudo" or "Doas" and a few other options so anyone can customize bell-pkg to their liking :3 )
 ---------------------------------------------------------------------------------------
 bellrepos.txt text format:
-----
 (pkgname) (downloadlink)
 ---------------------------------------------------------------------------------------
