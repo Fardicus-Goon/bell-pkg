@@ -36,5 +36,5 @@ Proper config file (For people to choose their autenticator such as "Sudo" or "D
 ---------------------------------------------------------------------------------------
 bellrepos.txt text format:
 ----
-<pkgname> <downloadlink>
+(pkgname) (downloadlink)
 ---------------------------------------------------------------------------------------
