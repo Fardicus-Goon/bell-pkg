@@ -1,0 +1,275 @@
+#!/bin/sh
+
+installpkg() {
+
+build=$(mktemp -q -t -d build-XXXXXXXXXX)
+
+name="$1"
+repo="/etc/bellpkg/bellrepos.txt"
+
+echo -e "|---------------------------|
+|Please type package name!!!|
+|---------------------------|"
+
+read name
+
+url=$(grep "^$name " "$repo" | awk '{print $2}')
+
+if [[ -z "$url" ]]; then
+echo "|------------------------------------------------|
+|Can't find that package in repo list!!!---------|
+|------------------------------------------------|
+|Maybe check the (bellrepos.txt) file!!!---------|
+|------------------------------------------------|"
+exit 1
+fi
+
+echo "|------------------------|
+|Downloading package.....|
+|------------------------|" && wget -q -P /var/cache/bellpkg/cache "$url"
+
+ls /var/cache/bellpkg/cache
+
+echo -e "|--------------------------------------------|
+|Package obtained!!! Please type file name!!!|
+|--------------------------------------------|"
+
+read the_pkg
+
+tar xpf /var/cache/bellpkg/cache/"$the_pkg".tar.*z --xattrs-include='*.*' --numeric-owner -C $build
+
+echo "|----------------------|
+|Configuring build.....|
+|----------------------|"
+
+echo "$name" > /etc/bellpkg/@world
+
+cd $build/$the_pkg
+
+./configure
+
+echo "|---------------------|
+|Creating Package.....|
+|---------------------|"
+
+make
+
+make install
+
+echo "|---------------------------|
+|Cleaning build directory!!!|
+|---------------------------|"
+
+cd /
+
+rm -rf "$build"
+
+}
+
+reinstallpkg() {
+
+build=$(mktemp -q -t -d build-XXXXXXXXXX)
+
+if [ -z "$(ls -A /var/cache/bellpkg/cache)" ]; then
+echo "|----------------------------|
+|Cache is empty!!! Exiting!!!|
+|----------------------------|"
+exit 1
+
+else
+
+ls /var/cache/bellpkg/cache
+
+echo -e "|-----------------------------------------------|
+|Package(s) found!!! Please type package name!!!|
+|-----------------------------------------------|"
+
+read the_pkg
+
+tar xpf /var/cache/bellpkg/cache/"$the_pkg".tar.*z --xattrs-include='*.*' --numeric-owner -C $build
+
+echo "|----------------------|
+|Configuring build.....|
+|----------------------|"
+
+cd $build/$the_pkg
+
+./configure
+
+echo "|---------------------|
+|Creating Package.....|
+|---------------------|"
+
+make
+
+make install
+
+echo "|---------------------------|
+|Cleaning build directory!!!|
+|---------------------------|"
+
+cd /
+
+rm -rf "$build"
+fi
+
+}
+
+version() {
+echo "|------------------|
+|Bell version 0.0.4|
+|------------------|"
+
+}
+
+help() {
+echo "
+|-------------------------------------------|
+|             (Bell Help Pane)              |
+|-------------------------------------------|
+| installpkg (Download and install packages)|
+|-------------------------------------------|
+| reinstallpkg (Reinstall cached packages)  |
+|-------------------------------------------|
+| removepkg (Remove packages, BE CAREFUL.)  |
+|-------------------------------------------|
+| help (Shows the help pane)                |
+|-------------------------------------------|
+| updatepkg (Updates sources and packages)  |
+|-------------------------------------------|
+| version (Shows version info)              |
+|-------------------------------------------|
+| bootstrap (bootstraps bell into /usr/bin) |
+|-------------------------------------------|
+| cache (Lets you clear the tar cache)      |
+|-------------------------------------------|"
+
+}
+
+removepkg() {
+
+pkg="$1"
+world="/etc/bellpkg/@world"
+
+echo -e "|--------------------------------------|
+|What package would you like to remove?|
+|--------------------------------------|"
+
+read pkg
+
+remo=$(grep "^$pkg" "$world" | awk '{print $1}')
+
+if [[ -z "$remo" ]]; then
+echo "|---------------------------------------|
+|Can't find that package in @world!!!---|
+|---------------------------------------|
+|Are you sure you installed it?---------|
+|---------------------------------------|"
+exit 1
+fi
+
+rm -rf "/usr/bin/$remo"
+
+rm -rf "/usr/share/$remo"
+
+rm -rf "/usr/share/doc/$remo"
+
+rm -rf "/usr/share/licenses/$remo"
+
+sed -i "s/$remo//g" "$world"
+
+echo "|---------------------------------------|
+|The package was successfully removed!!!|
+|---------------------------------------|"
+
+}
+
+bootstrap() {
+echo -e "
+|----------------------------------------------------------------------------------|
+|Would you like to bootstrap bell-pkg? MUST BE RUN WITH SUDO OR DOAS!!! [Yes or No]|
+|----------------------------------------------------------------------------------|"
+
+read the_boot
+
+if [[ "$the_boot" =~ ^([yY][eE][sS])$ ]]
+then
+echo "|----------------|
+|Bootstrapping!!!|
+|----------------|"
+cp bell /usr/bin/
+
+mkdir -p /etc/bellpkg/
+
+touch /etc/bellpkg/bellrepos.txt
+
+touch /etc/bellpkg/@world
+
+mkdir -p /var/cache/bellpkg/cache/
+
+echo "|------------------------------|
+|Done bootstrapping!!! Enjoy!!!|
+|------------------------------|"
+
+else
+echo "|----------|
+|Exiting!!!|
+|----------|"
+exit 1
+fi
+}
+
+cache() {
+echo -e "|----------------------------------------------|
+|Would you like to clear the cache? [Yes or No]|
+|----------------------------------------------|"
+
+read the_clr
+
+if [[ "$the_clr" =~ ^([yY][eE][sS])$ ]]
+then
+echo "|-----------------|
+|Clearing cache!!!|
+|-----------------|"
+rm -rf /var/cache/bellpkg/cache/*
+else
+echo "|----------|
+|Exiting!!!|
+|----------|"
+exit 1
+fi
+}
+
+case "$1" in
+installpkg)
+installpkg
+;;
+removepkg)
+removepkg
+;;
+help)
+help
+;;
+version)
+version
+;;
+cache)
+cache
+;;
+reinstallpkg)
+reinstallpkg
+;;
+bootstrap)
+bootstrap
+;;
+*)
+
+echo "|-------------------------------------------------------------------------------------------------|
+|Welcome to Bell (0.0.4)!!! Bell is a shell based package manager that is designed to be simple!!!|
+|-------------------------------------------------------------------------------------------------|"
+echo "|--------------------------------------------|
+|Type (bell help) for subcommand information!!!|
+|--------------------------------------------|"
+exit 1
+;;
+esac
